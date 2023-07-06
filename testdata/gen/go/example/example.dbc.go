@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"go.einride.tech/can"
-	"go.einride.tech/can/pkg/candebug"
-	"go.einride.tech/can/pkg/canrunner"
-	"go.einride.tech/can/pkg/cantext"
-	"go.einride.tech/can/pkg/descriptor"
-	"go.einride.tech/can/pkg/generated"
-	"go.einride.tech/can/pkg/socketcan"
+	"github.com/xiaoxu5271/can-go"
+	"github.com/xiaoxu5271/can-go/pkg/candebug"
+	"github.com/xiaoxu5271/can-go/pkg/canrunner"
+	"github.com/xiaoxu5271/can-go/pkg/cantext"
+	"github.com/xiaoxu5271/can-go/pkg/descriptor"
+	"github.com/xiaoxu5271/can-go/pkg/generated"
+	"github.com/xiaoxu5271/can-go/pkg/socketcan"
 )
 
 // prevent unused imports

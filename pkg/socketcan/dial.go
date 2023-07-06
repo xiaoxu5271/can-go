@@ -3,6 +3,8 @@ package socketcan
 import (
 	"context"
 	"net"
+
+	"golang.org/x/sys/unix"
 )
 
 const udp = "udp"
@@ -47,6 +49,12 @@ func DialContext(ctx context.Context, network, address string) (net.Conn, error)
 		var d net.Dialer
 		return d.DialContext(ctx, network, address)
 	}
+}
+
+func DialContextCanFilter(ctx context.Context, address string, filters []unix.CanFilter) (net.Conn, error) {
+	return dialCtx(ctx, func() (net.Conn, error) {
+		return dialCanFiltersRaw(address, filters)
+	})
 }
 
 func dialCtx(ctx context.Context, connProvider func() (net.Conn, error)) (net.Conn, error) {

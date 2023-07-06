@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.einride.tech/can/pkg/dbc"
-	"go.einride.tech/can/pkg/dbc/analysis"
+	"github.com/xiaoxu5271/can-go/pkg/dbc"
+	"github.com/xiaoxu5271/can-go/pkg/dbc/analysis"
 	"gotest.tools/v3/assert"
 )
 

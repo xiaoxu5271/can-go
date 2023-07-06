@@ -1,4 +1,4 @@
-module go.einride.tech/can/.sage
+module github.com/xiaoxu5271/can-go/.sage
 
 go 1.19
 

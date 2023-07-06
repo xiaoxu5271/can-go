@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/scanner"
 
-	"go.einride.tech/can/pkg/dbc"
+	"github.com/xiaoxu5271/can-go/pkg/dbc"
 )
 
 // An Analyzer describes an analysis function and its options.

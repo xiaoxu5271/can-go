@@ -3,7 +3,7 @@ package descriptor
 import (
 	"math"
 
-	"go.einride.tech/can"
+	"github.com/xiaoxu5271/can-go"
 )
 
 // Signal describes a CAN signal.

@@ -1,8 +1,8 @@
 package signalbounds
 
 import (
-	"go.einride.tech/can/pkg/dbc"
-	"go.einride.tech/can/pkg/dbc/analysis"
+	"github.com/xiaoxu5271/can-go/pkg/dbc"
+	"github.com/xiaoxu5271/can-go/pkg/dbc/analysis"
 )
 
 func Analyzer() *analysis.Analyzer {
