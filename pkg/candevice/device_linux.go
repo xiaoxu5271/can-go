@@ -12,7 +12,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const canLinkType = "can"
+const (
+	CanLinkType  = "can"
+	VcanLinkType = "vcan"
+)
 
 const (
 	StateErrorActive  = unix.CAN_STATE_ERROR_ACTIVE
@@ -36,6 +39,16 @@ type Device struct {
 	index  int32
 	li     linkInfoMsg
 	ifi    ifInfoMsg
+}
+
+type CanDevice interface {
+	Bitrate() (uint32, error)
+	Info() (Info, error)
+	IsUp() (bool, error)
+	SetBitrate(uint32) error
+	SetDown() error
+	SetListenOnlyMode(bool) error
+	SetUp() error
 }
 
 // Creates a handle to a CAN device specified by name, e.g. can0.
@@ -130,6 +143,57 @@ func (d *Device) Bitrate() (uint32, error) {
 	return d.li.info.BitTiming.Bitrate, nil
 }
 
+func (d *Device) SetListenOnlyMode(mode bool) error {
+	c, err := netlink.Dial(unix.NETLINK_ROUTE, &netlink.Config{})
+	if err != nil {
+		return fmt.Errorf("couldn't dial netlink socket: %w", err)
+	}
+	defer c.Close()
+
+	ifi := &ifInfoMsg{
+		unix.IfInfomsg{Index: d.index},
+	}
+	req, err := d.newRequest(unix.RTM_NEWLINK, ifi)
+	if err != nil {
+		return fmt.Errorf("couldn't create netlink request: %w", err)
+	}
+
+	li := &linkInfoMsg{
+		linkType: CanLinkType,
+	}
+
+	li.info, err = d.getCurrentParametersForSet()
+	if err != nil {
+		return fmt.Errorf("couldn't get current parameters: %w", err)
+	}
+
+	if mode {
+		li.info.CtrlMode.Mask |= unix.CAN_CTRLMODE_LISTENONLY
+		li.info.CtrlMode.Flags |= unix.CAN_CTRLMODE_LISTENONLY
+	} else {
+		li.info.CtrlMode.Mask |= unix.CAN_CTRLMODE_LISTENONLY
+		li.info.CtrlMode.Flags = 0
+	}
+
+	ae := netlink.NewAttributeEncoder()
+	ae.Nested(unix.IFLA_LINKINFO, li.encode)
+	liData, err := ae.Encode()
+	if err != nil {
+		return fmt.Errorf("couldn't encode message: %w", err)
+	}
+
+	req.Data = append(req.Data, liData...)
+
+	res, err := c.Execute(req)
+	if err != nil {
+		return fmt.Errorf("couldn't set listen-only mode: %w", err)
+	}
+	if len(res) > 1 {
+		return fmt.Errorf("expected 1 message, got %d", len(res))
+	}
+	return nil
+}
+
 func (d *Device) SetBitrate(bitrate uint32) error {
 	c, err := netlink.Dial(unix.NETLINK_ROUTE, &netlink.Config{})
 	if err != nil {
@@ -146,8 +210,14 @@ func (d *Device) SetBitrate(bitrate uint32) error {
 	}
 
 	li := &linkInfoMsg{
-		linkType: canLinkType,
+		linkType: CanLinkType,
 	}
+
+	li.info, err = d.getCurrentParametersForSet()
+	if err != nil {
+		return fmt.Errorf("couldn't get current parameters: %w", err)
+	}
+
 	li.info.BitTiming.Bitrate = bitrate
 	ae := netlink.NewAttributeEncoder()
 	ae.Nested(unix.IFLA_LINKINFO, li.encode)
@@ -173,6 +243,7 @@ type Info struct {
 	Clock            Clock
 	CtrlMode         CtrlMode
 	BusErrorCounters BusErrorCounters
+	Type             string
 
 	State     uint32
 	RestartMs uint32
@@ -214,6 +285,15 @@ func (d *Device) updateInfo() error {
 	return nil
 }
 
+func (d *Device) getCurrentParametersForSet() (Info, error) {
+	i, err := d.Info()
+	if err != nil {
+		return Info{}, err
+	}
+
+	return Info{BitTiming: BitTiming{unix.CANBitTiming{Bitrate: i.BitTiming.Bitrate}}, CtrlMode: i.CtrlMode}, nil
+}
+
 func (d *Device) newRequest(typ netlink.HeaderType, ifi *ifInfoMsg) (netlink.Message, error) {
 	req := netlink.Message{
 		Header: netlink.Header{
@@ -244,6 +324,7 @@ func (d *Device) unmarshalBinary(data []byte) error {
 			d.ifname = ad.String()
 		case unix.IFLA_LINKINFO:
 			ad.Nested(d.li.decode)
+			d.li.info.Type = d.li.linkType
 		default:
 		}
 	}
@@ -364,6 +445,13 @@ type CtrlMode struct {
 	unix.CANCtrlMode
 }
 
+func (cm *CtrlMode) marshalBinary() []byte {
+	buf := make([]byte, sizeOfCtrlMode)
+	nlenc.PutUint32(buf[0:4], cm.Mask)
+	nlenc.PutUint32(buf[4:8], cm.Flags)
+	return buf
+}
+
 func (cm *CtrlMode) unmarshalBinary(data []byte) error {
 	if len(data) != sizeOfCtrlMode {
 		return fmt.Errorf(
@@ -441,6 +529,7 @@ func (i *Info) decode(nad *netlink.AttributeDecoder) error {
 // TODO: add more structures as needed.
 func (i *Info) encode(nae *netlink.AttributeEncoder) error {
 	nae.Bytes(unix.IFLA_CAN_BITTIMING, i.BitTiming.marshalBinary())
+	nae.Bytes(unix.IFLA_CAN_CTRLMODE, i.CtrlMode.marshalBinary())
 	return nil
 }
 
@@ -456,7 +545,7 @@ func (li *linkInfoMsg) decode(nad *netlink.AttributeDecoder) error {
 		switch nad.Type() {
 		case unix.IFLA_INFO_KIND:
 			li.linkType = nad.String()
-			if li.linkType != canLinkType {
+			if (li.linkType != CanLinkType) && (li.linkType != VcanLinkType) {
 				return fmt.Errorf("not a CAN interface")
 			}
 		case unix.IFLA_INFO_DATA:

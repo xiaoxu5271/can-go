@@ -40,8 +40,8 @@ type EmptyMessageReader interface {
 
 // EmptyMessageWriter provides write access to a EmptyMessage message.
 type EmptyMessageWriter interface {
-	// CopyFrom copies all values from EmptyMessageReader.
-	CopyFrom(EmptyMessageReader) *EmptyMessage
+	// CopyFrom copies all values from EmptyMessage.
+	CopyFrom(*EmptyMessage) *EmptyMessage
 }
 
 type EmptyMessage struct {
@@ -56,7 +56,8 @@ func NewEmptyMessage() *EmptyMessage {
 func (m *EmptyMessage) Reset() {
 }
 
-func (m *EmptyMessage) CopyFrom(o EmptyMessageReader) *EmptyMessage {
+func (m *EmptyMessage) CopyFrom(o *EmptyMessage) *EmptyMessage {
+	_ = m.UnmarshalFrame(o.Frame())
 	return m
 }
 
@@ -114,8 +115,8 @@ type DriverHeartbeatReader interface {
 
 // DriverHeartbeatWriter provides write access to a DriverHeartbeat message.
 type DriverHeartbeatWriter interface {
-	// CopyFrom copies all values from DriverHeartbeatReader.
-	CopyFrom(DriverHeartbeatReader) *DriverHeartbeat
+	// CopyFrom copies all values from DriverHeartbeat.
+	CopyFrom(*DriverHeartbeat) *DriverHeartbeat
 	// SetCommand sets the value of the Command signal.
 	SetCommand(DriverHeartbeat_Command) *DriverHeartbeat
 }
@@ -134,8 +135,8 @@ func (m *DriverHeartbeat) Reset() {
 	m.xxx_Command = 0
 }
 
-func (m *DriverHeartbeat) CopyFrom(o DriverHeartbeatReader) *DriverHeartbeat {
-	m.xxx_Command = o.Command()
+func (m *DriverHeartbeat) CopyFrom(o *DriverHeartbeat) *DriverHeartbeat {
+	_ = m.UnmarshalFrame(o.Frame())
 	return m
 }
 
@@ -226,18 +227,26 @@ func (m *DriverHeartbeat) UnmarshalFrame(f can.Frame) error {
 type MotorCommandReader interface {
 	// Steer returns the physical value of the Steer signal.
 	Steer() float64
+	// RawSteer returns the raw (encoded) value of the Steer signal.
+	RawSteer() int8
 	// Drive returns the physical value of the Drive signal.
 	Drive() float64
+	// RawDrive returns the raw (encoded) value of the Drive signal.
+	RawDrive() uint8
 }
 
 // MotorCommandWriter provides write access to a MotorCommand message.
 type MotorCommandWriter interface {
-	// CopyFrom copies all values from MotorCommandReader.
-	CopyFrom(MotorCommandReader) *MotorCommand
+	// CopyFrom copies all values from MotorCommand.
+	CopyFrom(*MotorCommand) *MotorCommand
 	// SetSteer sets the physical value of the Steer signal.
 	SetSteer(float64) *MotorCommand
+	// SetRawSteer sets the raw (encoded) value of the Steer signal.
+	SetRawSteer(int8) *MotorCommand
 	// SetDrive sets the physical value of the Drive signal.
 	SetDrive(float64) *MotorCommand
+	// SetRawDrive sets the raw (encoded) value of the Drive signal.
+	SetRawDrive(uint8) *MotorCommand
 }
 
 type MotorCommand struct {
@@ -256,9 +265,8 @@ func (m *MotorCommand) Reset() {
 	m.xxx_Drive = 0
 }
 
-func (m *MotorCommand) CopyFrom(o MotorCommandReader) *MotorCommand {
-	m.SetSteer(o.Steer())
-	m.SetDrive(o.Drive())
+func (m *MotorCommand) CopyFrom(o *MotorCommand) *MotorCommand {
+	_ = m.UnmarshalFrame(o.Frame())
 	return m
 }
 
@@ -281,12 +289,30 @@ func (m *MotorCommand) SetSteer(v float64) *MotorCommand {
 	return m
 }
 
+func (m *MotorCommand) RawSteer() int8 {
+	return m.xxx_Steer
+}
+
+func (m *MotorCommand) SetRawSteer(v int8) *MotorCommand {
+	m.xxx_Steer = int8(Messages().MotorCommand.Steer.SaturatedCastSigned(int64(v)))
+	return m
+}
+
 func (m *MotorCommand) Drive() float64 {
 	return Messages().MotorCommand.Drive.ToPhysical(float64(m.xxx_Drive))
 }
 
 func (m *MotorCommand) SetDrive(v float64) *MotorCommand {
 	m.xxx_Drive = uint8(Messages().MotorCommand.Drive.FromPhysical(v))
+	return m
+}
+
+func (m *MotorCommand) RawDrive() uint8 {
+	return m.xxx_Drive
+}
+
+func (m *MotorCommand) SetRawDrive(v uint8) *MotorCommand {
+	m.xxx_Drive = uint8(Messages().MotorCommand.Drive.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -338,46 +364,78 @@ type SensorSonarsReader interface {
 	ErrCount() uint16
 	// Left returns the physical value of the Left signal.
 	Left() float64
+	// RawLeft returns the raw (encoded) value of the Left signal.
+	RawLeft() uint16
 	// NoFiltLeft returns the physical value of the NoFiltLeft signal.
 	NoFiltLeft() float64
+	// RawNoFiltLeft returns the raw (encoded) value of the NoFiltLeft signal.
+	RawNoFiltLeft() uint16
 	// Middle returns the physical value of the Middle signal.
 	Middle() float64
+	// RawMiddle returns the raw (encoded) value of the Middle signal.
+	RawMiddle() uint16
 	// NoFiltMiddle returns the physical value of the NoFiltMiddle signal.
 	NoFiltMiddle() float64
+	// RawNoFiltMiddle returns the raw (encoded) value of the NoFiltMiddle signal.
+	RawNoFiltMiddle() uint16
 	// Right returns the physical value of the Right signal.
 	Right() float64
+	// RawRight returns the raw (encoded) value of the Right signal.
+	RawRight() uint16
 	// NoFiltRight returns the physical value of the NoFiltRight signal.
 	NoFiltRight() float64
+	// RawNoFiltRight returns the raw (encoded) value of the NoFiltRight signal.
+	RawNoFiltRight() uint16
 	// Rear returns the physical value of the Rear signal.
 	Rear() float64
+	// RawRear returns the raw (encoded) value of the Rear signal.
+	RawRear() uint16
 	// NoFiltRear returns the physical value of the NoFiltRear signal.
 	NoFiltRear() float64
+	// RawNoFiltRear returns the raw (encoded) value of the NoFiltRear signal.
+	RawNoFiltRear() uint16
 }
 
 // SensorSonarsWriter provides write access to a SensorSonars message.
 type SensorSonarsWriter interface {
-	// CopyFrom copies all values from SensorSonarsReader.
-	CopyFrom(SensorSonarsReader) *SensorSonars
+	// CopyFrom copies all values from SensorSonars.
+	CopyFrom(*SensorSonars) *SensorSonars
 	// SetMux sets the value of the Mux signal.
 	SetMux(uint8) *SensorSonars
 	// SetErrCount sets the value of the ErrCount signal.
 	SetErrCount(uint16) *SensorSonars
 	// SetLeft sets the physical value of the Left signal.
 	SetLeft(float64) *SensorSonars
+	// SetRawLeft sets the raw (encoded) value of the Left signal.
+	SetRawLeft(uint16) *SensorSonars
 	// SetNoFiltLeft sets the physical value of the NoFiltLeft signal.
 	SetNoFiltLeft(float64) *SensorSonars
+	// SetRawNoFiltLeft sets the raw (encoded) value of the NoFiltLeft signal.
+	SetRawNoFiltLeft(uint16) *SensorSonars
 	// SetMiddle sets the physical value of the Middle signal.
 	SetMiddle(float64) *SensorSonars
+	// SetRawMiddle sets the raw (encoded) value of the Middle signal.
+	SetRawMiddle(uint16) *SensorSonars
 	// SetNoFiltMiddle sets the physical value of the NoFiltMiddle signal.
 	SetNoFiltMiddle(float64) *SensorSonars
+	// SetRawNoFiltMiddle sets the raw (encoded) value of the NoFiltMiddle signal.
+	SetRawNoFiltMiddle(uint16) *SensorSonars
 	// SetRight sets the physical value of the Right signal.
 	SetRight(float64) *SensorSonars
+	// SetRawRight sets the raw (encoded) value of the Right signal.
+	SetRawRight(uint16) *SensorSonars
 	// SetNoFiltRight sets the physical value of the NoFiltRight signal.
 	SetNoFiltRight(float64) *SensorSonars
+	// SetRawNoFiltRight sets the raw (encoded) value of the NoFiltRight signal.
+	SetRawNoFiltRight(uint16) *SensorSonars
 	// SetRear sets the physical value of the Rear signal.
 	SetRear(float64) *SensorSonars
+	// SetRawRear sets the raw (encoded) value of the Rear signal.
+	SetRawRear(uint16) *SensorSonars
 	// SetNoFiltRear sets the physical value of the NoFiltRear signal.
 	SetNoFiltRear(float64) *SensorSonars
+	// SetRawNoFiltRear sets the raw (encoded) value of the NoFiltRear signal.
+	SetRawNoFiltRear(uint16) *SensorSonars
 }
 
 type SensorSonars struct {
@@ -412,17 +470,8 @@ func (m *SensorSonars) Reset() {
 	m.xxx_NoFiltRear = 0
 }
 
-func (m *SensorSonars) CopyFrom(o SensorSonarsReader) *SensorSonars {
-	m.xxx_Mux = o.Mux()
-	m.xxx_ErrCount = o.ErrCount()
-	m.SetLeft(o.Left())
-	m.SetNoFiltLeft(o.NoFiltLeft())
-	m.SetMiddle(o.Middle())
-	m.SetNoFiltMiddle(o.NoFiltMiddle())
-	m.SetRight(o.Right())
-	m.SetNoFiltRight(o.NoFiltRight())
-	m.SetRear(o.Rear())
-	m.SetNoFiltRear(o.NoFiltRear())
+func (m *SensorSonars) CopyFrom(o *SensorSonars) *SensorSonars {
+	_ = m.UnmarshalFrame(o.Frame())
 	return m
 }
 
@@ -463,12 +512,30 @@ func (m *SensorSonars) SetLeft(v float64) *SensorSonars {
 	return m
 }
 
+func (m *SensorSonars) RawLeft() uint16 {
+	return m.xxx_Left
+}
+
+func (m *SensorSonars) SetRawLeft(v uint16) *SensorSonars {
+	m.xxx_Left = uint16(Messages().SensorSonars.Left.SaturatedCastUnsigned(uint64(v)))
+	return m
+}
+
 func (m *SensorSonars) NoFiltLeft() float64 {
 	return Messages().SensorSonars.NoFiltLeft.ToPhysical(float64(m.xxx_NoFiltLeft))
 }
 
 func (m *SensorSonars) SetNoFiltLeft(v float64) *SensorSonars {
 	m.xxx_NoFiltLeft = uint16(Messages().SensorSonars.NoFiltLeft.FromPhysical(v))
+	return m
+}
+
+func (m *SensorSonars) RawNoFiltLeft() uint16 {
+	return m.xxx_NoFiltLeft
+}
+
+func (m *SensorSonars) SetRawNoFiltLeft(v uint16) *SensorSonars {
+	m.xxx_NoFiltLeft = uint16(Messages().SensorSonars.NoFiltLeft.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -481,12 +548,30 @@ func (m *SensorSonars) SetMiddle(v float64) *SensorSonars {
 	return m
 }
 
+func (m *SensorSonars) RawMiddle() uint16 {
+	return m.xxx_Middle
+}
+
+func (m *SensorSonars) SetRawMiddle(v uint16) *SensorSonars {
+	m.xxx_Middle = uint16(Messages().SensorSonars.Middle.SaturatedCastUnsigned(uint64(v)))
+	return m
+}
+
 func (m *SensorSonars) NoFiltMiddle() float64 {
 	return Messages().SensorSonars.NoFiltMiddle.ToPhysical(float64(m.xxx_NoFiltMiddle))
 }
 
 func (m *SensorSonars) SetNoFiltMiddle(v float64) *SensorSonars {
 	m.xxx_NoFiltMiddle = uint16(Messages().SensorSonars.NoFiltMiddle.FromPhysical(v))
+	return m
+}
+
+func (m *SensorSonars) RawNoFiltMiddle() uint16 {
+	return m.xxx_NoFiltMiddle
+}
+
+func (m *SensorSonars) SetRawNoFiltMiddle(v uint16) *SensorSonars {
+	m.xxx_NoFiltMiddle = uint16(Messages().SensorSonars.NoFiltMiddle.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -499,12 +584,30 @@ func (m *SensorSonars) SetRight(v float64) *SensorSonars {
 	return m
 }
 
+func (m *SensorSonars) RawRight() uint16 {
+	return m.xxx_Right
+}
+
+func (m *SensorSonars) SetRawRight(v uint16) *SensorSonars {
+	m.xxx_Right = uint16(Messages().SensorSonars.Right.SaturatedCastUnsigned(uint64(v)))
+	return m
+}
+
 func (m *SensorSonars) NoFiltRight() float64 {
 	return Messages().SensorSonars.NoFiltRight.ToPhysical(float64(m.xxx_NoFiltRight))
 }
 
 func (m *SensorSonars) SetNoFiltRight(v float64) *SensorSonars {
 	m.xxx_NoFiltRight = uint16(Messages().SensorSonars.NoFiltRight.FromPhysical(v))
+	return m
+}
+
+func (m *SensorSonars) RawNoFiltRight() uint16 {
+	return m.xxx_NoFiltRight
+}
+
+func (m *SensorSonars) SetRawNoFiltRight(v uint16) *SensorSonars {
+	m.xxx_NoFiltRight = uint16(Messages().SensorSonars.NoFiltRight.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -517,12 +620,30 @@ func (m *SensorSonars) SetRear(v float64) *SensorSonars {
 	return m
 }
 
+func (m *SensorSonars) RawRear() uint16 {
+	return m.xxx_Rear
+}
+
+func (m *SensorSonars) SetRawRear(v uint16) *SensorSonars {
+	m.xxx_Rear = uint16(Messages().SensorSonars.Rear.SaturatedCastUnsigned(uint64(v)))
+	return m
+}
+
 func (m *SensorSonars) NoFiltRear() float64 {
 	return Messages().SensorSonars.NoFiltRear.ToPhysical(float64(m.xxx_NoFiltRear))
 }
 
 func (m *SensorSonars) SetNoFiltRear(v float64) *SensorSonars {
 	m.xxx_NoFiltRear = uint16(Messages().SensorSonars.NoFiltRear.FromPhysical(v))
+	return m
+}
+
+func (m *SensorSonars) RawNoFiltRear() uint16 {
+	return m.xxx_NoFiltRear
+}
+
+func (m *SensorSonars) SetRawNoFiltRear(v uint16) *SensorSonars {
+	m.xxx_NoFiltRear = uint16(Messages().SensorSonars.NoFiltRear.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -620,16 +741,20 @@ type MotorStatusReader interface {
 	WheelError() bool
 	// SpeedKph returns the physical value of the SpeedKph signal.
 	SpeedKph() float64
+	// RawSpeedKph returns the raw (encoded) value of the SpeedKph signal.
+	RawSpeedKph() uint16
 }
 
 // MotorStatusWriter provides write access to a MotorStatus message.
 type MotorStatusWriter interface {
-	// CopyFrom copies all values from MotorStatusReader.
-	CopyFrom(MotorStatusReader) *MotorStatus
+	// CopyFrom copies all values from MotorStatus.
+	CopyFrom(*MotorStatus) *MotorStatus
 	// SetWheelError sets the value of the WheelError signal.
 	SetWheelError(bool) *MotorStatus
 	// SetSpeedKph sets the physical value of the SpeedKph signal.
 	SetSpeedKph(float64) *MotorStatus
+	// SetRawSpeedKph sets the raw (encoded) value of the SpeedKph signal.
+	SetRawSpeedKph(uint16) *MotorStatus
 }
 
 type MotorStatus struct {
@@ -648,9 +773,8 @@ func (m *MotorStatus) Reset() {
 	m.xxx_SpeedKph = 0
 }
 
-func (m *MotorStatus) CopyFrom(o MotorStatusReader) *MotorStatus {
-	m.xxx_WheelError = o.WheelError()
-	m.SetSpeedKph(o.SpeedKph())
+func (m *MotorStatus) CopyFrom(o *MotorStatus) *MotorStatus {
+	_ = m.UnmarshalFrame(o.Frame())
 	return m
 }
 
@@ -679,6 +803,15 @@ func (m *MotorStatus) SpeedKph() float64 {
 
 func (m *MotorStatus) SetSpeedKph(v float64) *MotorStatus {
 	m.xxx_SpeedKph = uint16(Messages().MotorStatus.SpeedKph.FromPhysical(v))
+	return m
+}
+
+func (m *MotorStatus) RawSpeedKph() uint16 {
+	return m.xxx_SpeedKph
+}
+
+func (m *MotorStatus) SetRawSpeedKph(v uint16) *MotorStatus {
+	m.xxx_SpeedKph = uint16(Messages().MotorStatus.SpeedKph.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -732,19 +865,20 @@ type IODebugReader interface {
 	TestSigned() int8
 	// TestFloat returns the physical value of the TestFloat signal.
 	TestFloat() float64
+	// RawTestFloat returns the raw (encoded) value of the TestFloat signal.
+	RawTestFloat() uint8
 	// TestBoolEnum returns the value of the TestBoolEnum signal.
 	TestBoolEnum() IODebug_TestBoolEnum
 	// TestScaledEnum returns the physical value of the TestScaledEnum signal.
 	TestScaledEnum() float64
-
-	// TestScaledEnum returns the raw (encoded) value of the TestScaledEnum signal.
+	// RawTestScaledEnum returns the raw (encoded) value of the TestScaledEnum signal.
 	RawTestScaledEnum() IODebug_TestScaledEnum
 }
 
 // IODebugWriter provides write access to a IODebug message.
 type IODebugWriter interface {
-	// CopyFrom copies all values from IODebugReader.
-	CopyFrom(IODebugReader) *IODebug
+	// CopyFrom copies all values from IODebug.
+	CopyFrom(*IODebug) *IODebug
 	// SetTestUnsigned sets the value of the TestUnsigned signal.
 	SetTestUnsigned(uint8) *IODebug
 	// SetTestEnum sets the value of the TestEnum signal.
@@ -753,11 +887,12 @@ type IODebugWriter interface {
 	SetTestSigned(int8) *IODebug
 	// SetTestFloat sets the physical value of the TestFloat signal.
 	SetTestFloat(float64) *IODebug
+	// SetRawTestFloat sets the raw (encoded) value of the TestFloat signal.
+	SetRawTestFloat(uint8) *IODebug
 	// SetTestBoolEnum sets the value of the TestBoolEnum signal.
 	SetTestBoolEnum(IODebug_TestBoolEnum) *IODebug
 	// SetTestScaledEnum sets the physical value of the TestScaledEnum signal.
 	SetTestScaledEnum(float64) *IODebug
-
 	// SetRawTestScaledEnum sets the raw (encoded) value of the TestScaledEnum signal.
 	SetRawTestScaledEnum(IODebug_TestScaledEnum) *IODebug
 }
@@ -786,13 +921,8 @@ func (m *IODebug) Reset() {
 	m.xxx_TestScaledEnum = 0
 }
 
-func (m *IODebug) CopyFrom(o IODebugReader) *IODebug {
-	m.xxx_TestUnsigned = o.TestUnsigned()
-	m.xxx_TestEnum = o.TestEnum()
-	m.xxx_TestSigned = o.TestSigned()
-	m.SetTestFloat(o.TestFloat())
-	m.xxx_TestBoolEnum = o.TestBoolEnum()
-	m.SetTestScaledEnum(o.TestScaledEnum())
+func (m *IODebug) CopyFrom(o *IODebug) *IODebug {
+	_ = m.UnmarshalFrame(o.Frame())
 	return m
 }
 
@@ -839,6 +969,15 @@ func (m *IODebug) TestFloat() float64 {
 
 func (m *IODebug) SetTestFloat(v float64) *IODebug {
 	m.xxx_TestFloat = uint8(Messages().IODebug.TestFloat.FromPhysical(v))
+	return m
+}
+
+func (m *IODebug) RawTestFloat() uint8 {
+	return m.xxx_TestFloat
+}
+
+func (m *IODebug) SetRawTestFloat(v uint8) *IODebug {
+	m.xxx_TestFloat = uint8(Messages().IODebug.TestFloat.SaturatedCastUnsigned(uint64(v)))
 	return m
 }
 
@@ -982,6 +1121,126 @@ func (m *IODebug) UnmarshalFrame(f can.Frame) error {
 	return nil
 }
 
+// IOFloat32Reader provides read access to a IOFloat32 message.
+type IOFloat32Reader interface {
+	// Float32ValueNoRange returns the value of the Float32ValueNoRange signal.
+	Float32ValueNoRange() float32
+	// Float32WithRange returns the physical value of the Float32WithRange signal.
+	Float32WithRange() float64
+	// RawFloat32WithRange returns the raw (encoded) value of the Float32WithRange signal.
+	RawFloat32WithRange() float32
+}
+
+// IOFloat32Writer provides write access to a IOFloat32 message.
+type IOFloat32Writer interface {
+	// CopyFrom copies all values from IOFloat32.
+	CopyFrom(*IOFloat32) *IOFloat32
+	// SetFloat32ValueNoRange sets the value of the Float32ValueNoRange signal.
+	SetFloat32ValueNoRange(float32) *IOFloat32
+	// SetFloat32WithRange sets the physical value of the Float32WithRange signal.
+	SetFloat32WithRange(float64) *IOFloat32
+	// SetRawFloat32WithRange sets the raw (encoded) value of the Float32WithRange signal.
+	SetRawFloat32WithRange(float32) *IOFloat32
+}
+
+type IOFloat32 struct {
+	xxx_Float32ValueNoRange float32
+	xxx_Float32WithRange    float32
+}
+
+func NewIOFloat32() *IOFloat32 {
+	m := &IOFloat32{}
+	m.Reset()
+	return m
+}
+
+func (m *IOFloat32) Reset() {
+	m.xxx_Float32ValueNoRange = 0
+	m.xxx_Float32WithRange = 0
+}
+
+func (m *IOFloat32) CopyFrom(o *IOFloat32) *IOFloat32 {
+	_ = m.UnmarshalFrame(o.Frame())
+	return m
+}
+
+// Descriptor returns the IOFloat32 descriptor.
+func (m *IOFloat32) Descriptor() *descriptor.Message {
+	return Messages().IOFloat32.Message
+}
+
+// String returns a compact string representation of the message.
+func (m *IOFloat32) String() string {
+	return cantext.MessageString(m)
+}
+
+func (m *IOFloat32) Float32ValueNoRange() float32 {
+	return m.xxx_Float32ValueNoRange
+}
+
+func (m *IOFloat32) SetFloat32ValueNoRange(v float32) *IOFloat32 {
+	m.xxx_Float32ValueNoRange = float32(Messages().IOFloat32.Float32ValueNoRange.SaturatedCastFloat(float64(v)))
+	return m
+}
+
+func (m *IOFloat32) Float32WithRange() float64 {
+	return Messages().IOFloat32.Float32WithRange.ToPhysical(float64(m.xxx_Float32WithRange))
+}
+
+func (m *IOFloat32) SetFloat32WithRange(v float64) *IOFloat32 {
+	m.xxx_Float32WithRange = float32(Messages().IOFloat32.Float32WithRange.FromPhysical(v))
+	return m
+}
+
+func (m *IOFloat32) RawFloat32WithRange() float32 {
+	return m.xxx_Float32WithRange
+}
+
+func (m *IOFloat32) SetRawFloat32WithRange(v float32) *IOFloat32 {
+	m.xxx_Float32WithRange = float32(Messages().IOFloat32.Float32WithRange.SaturatedCastFloat(float64(v)))
+	return m
+}
+
+// Frame returns a CAN frame representing the message.
+func (m *IOFloat32) Frame() can.Frame {
+	md := Messages().IOFloat32
+	f := can.Frame{ID: md.ID, IsExtended: md.IsExtended, Length: md.Length}
+	md.Float32ValueNoRange.MarshalFloat(&f.Data, float64(m.xxx_Float32ValueNoRange))
+	md.Float32WithRange.MarshalFloat(&f.Data, float64(m.xxx_Float32WithRange))
+	return f
+}
+
+// MarshalFrame encodes the message as a CAN frame.
+func (m *IOFloat32) MarshalFrame() (can.Frame, error) {
+	return m.Frame(), nil
+}
+
+// UnmarshalFrame decodes the message from a CAN frame.
+func (m *IOFloat32) UnmarshalFrame(f can.Frame) error {
+	md := Messages().IOFloat32
+	switch {
+	case f.ID != md.ID:
+		return fmt.Errorf(
+			"unmarshal IOFloat32: expects ID 600 (got %s with ID %d)", f.String(), f.ID,
+		)
+	case f.Length != md.Length:
+		return fmt.Errorf(
+			"unmarshal IOFloat32: expects length 8 (got %s with length %d)", f.String(), f.Length,
+		)
+	case f.IsRemote:
+		return fmt.Errorf(
+			"unmarshal IOFloat32: expects non-remote frame (got remote frame %s)", f.String(),
+		)
+	case f.IsExtended != md.IsExtended:
+		return fmt.Errorf(
+			"unmarshal IOFloat32: expects standard ID (got %s with extended ID)", f.String(),
+		)
+	}
+	m.xxx_Float32ValueNoRange = float32(md.Float32ValueNoRange.UnmarshalFloat(f.Data))
+	m.xxx_Float32WithRange = float32(md.Float32WithRange.UnmarshalFloat(f.Data))
+	return nil
+}
+
 type DBG interface {
 	sync.Locker
 	Tx() DBG_Tx
@@ -993,6 +1252,7 @@ type DBG_Rx interface {
 	http.Handler // for debugging
 	SensorSonars() DBG_Rx_SensorSonars
 	IODebug() DBG_Rx_IODebug
+	IOFloat32() DBG_Rx_IOFloat32
 }
 
 type DBG_Tx interface {
@@ -1007,6 +1267,12 @@ type DBG_Rx_SensorSonars interface {
 
 type DBG_Rx_IODebug interface {
 	IODebugReader
+	ReceiveTime() time.Time
+	SetAfterReceiveHook(h func(context.Context) error)
+}
+
+type DBG_Rx_IOFloat32 interface {
+	IOFloat32Reader
 	ReceiveTime() time.Time
 	SetAfterReceiveHook(h func(context.Context) error)
 }
@@ -1030,6 +1296,8 @@ func NewDBG(network, address string) DBG {
 	n.rx.xxx_SensorSonars.Reset()
 	n.rx.xxx_IODebug.init()
 	n.rx.xxx_IODebug.Reset()
+	n.rx.xxx_IOFloat32.init()
+	n.rx.xxx_IOFloat32.Reset()
 	return n
 }
 
@@ -1049,6 +1317,7 @@ type xxx_DBG_Rx struct {
 	parentMutex      *sync.Mutex
 	xxx_SensorSonars xxx_DBG_Rx_SensorSonars
 	xxx_IODebug      xxx_DBG_Rx_IODebug
+	xxx_IOFloat32    xxx_DBG_Rx_IOFloat32
 }
 
 var _ DBG_Rx = &xxx_DBG_Rx{}
@@ -1059,6 +1328,7 @@ func (rx *xxx_DBG_Rx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	candebug.ServeMessagesHTTP(w, r, []generated.Message{
 		&rx.xxx_SensorSonars,
 		&rx.xxx_IODebug,
+		&rx.xxx_IOFloat32,
 	})
 }
 
@@ -1068,6 +1338,10 @@ func (rx *xxx_DBG_Rx) SensorSonars() DBG_Rx_SensorSonars {
 
 func (rx *xxx_DBG_Rx) IODebug() DBG_Rx_IODebug {
 	return &rx.xxx_IODebug
+}
+
+func (rx *xxx_DBG_Rx) IOFloat32() DBG_Rx_IOFloat32 {
+	return &rx.xxx_IOFloat32
 }
 
 type xxx_DBG_Tx struct {
@@ -1096,6 +1370,8 @@ func (n *xxx_DBG) ReceivedMessage(id uint32) (canrunner.ReceivedMessage, bool) {
 		return &n.rx.xxx_SensorSonars, true
 	case 500:
 		return &n.rx.xxx_IODebug, true
+	case 600:
+		return &n.rx.xxx_IOFloat32, true
 	default:
 		return nil, false
 	}
@@ -1160,6 +1436,34 @@ func (m *xxx_DBG_Rx_IODebug) SetReceiveTime(t time.Time) {
 }
 
 var _ canrunner.ReceivedMessage = &xxx_DBG_Rx_IODebug{}
+
+type xxx_DBG_Rx_IOFloat32 struct {
+	IOFloat32
+	receiveTime      time.Time
+	afterReceiveHook func(context.Context) error
+}
+
+func (m *xxx_DBG_Rx_IOFloat32) init() {
+	m.afterReceiveHook = func(context.Context) error { return nil }
+}
+
+func (m *xxx_DBG_Rx_IOFloat32) SetAfterReceiveHook(h func(context.Context) error) {
+	m.afterReceiveHook = h
+}
+
+func (m *xxx_DBG_Rx_IOFloat32) AfterReceiveHook() func(context.Context) error {
+	return m.afterReceiveHook
+}
+
+func (m *xxx_DBG_Rx_IOFloat32) ReceiveTime() time.Time {
+	return m.receiveTime
+}
+
+func (m *xxx_DBG_Rx_IOFloat32) SetReceiveTime(t time.Time) {
+	m.receiveTime = t
+}
+
+var _ canrunner.ReceivedMessage = &xxx_DBG_Rx_IOFloat32{}
 
 type DRIVER interface {
 	sync.Locker
@@ -2298,6 +2602,7 @@ type MessagesDescriptor struct {
 	SensorSonars    *SensorSonarsDescriptor
 	MotorStatus     *MotorStatusDescriptor
 	IODebug         *IODebugDescriptor
+	IOFloat32       *IOFloat32Descriptor
 }
 
 // UnmarshalFrame unmarshals the provided example CAN frame.
@@ -2335,6 +2640,12 @@ func (md *MessagesDescriptor) UnmarshalFrame(f can.Frame) (generated.Message, er
 		return &msg, nil
 	case md.IODebug.ID:
 		var msg IODebug
+		if err := msg.UnmarshalFrame(f); err != nil {
+			return nil, fmt.Errorf("unmarshal example frame: %w", err)
+		}
+		return &msg, nil
+	case md.IOFloat32.ID:
+		var msg IOFloat32
 		if err := msg.UnmarshalFrame(f); err != nil {
 			return nil, fmt.Errorf("unmarshal example frame: %w", err)
 		}
@@ -2387,6 +2698,12 @@ type IODebugDescriptor struct {
 	TestFloat      *descriptor.Signal
 	TestBoolEnum   *descriptor.Signal
 	TestScaledEnum *descriptor.Signal
+}
+
+type IOFloat32Descriptor struct {
+	*descriptor.Message
+	Float32ValueNoRange *descriptor.Signal
+	Float32WithRange    *descriptor.Signal
 }
 
 // Database returns the example database descriptor.
@@ -2442,6 +2759,11 @@ var md = &MessagesDescriptor{
 		TestBoolEnum:   d.Messages[5].Signals[4],
 		TestScaledEnum: d.Messages[5].Signals[5],
 	},
+	IOFloat32: &IOFloat32Descriptor{
+		Message:             d.Messages[6],
+		Float32ValueNoRange: d.Messages[6].Signals[0],
+		Float32WithRange:    d.Messages[6].Signals[1],
+	},
 }
 
 var d = (*descriptor.Database)(&descriptor.Database{
@@ -2474,6 +2796,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:           (uint8)(8),
 					IsBigEndian:      (bool)(false),
 					IsSigned:         (bool)(false),
+					IsFloat:          (bool)(false),
 					IsMultiplexer:    (bool)(false),
 					IsMultiplexed:    (bool)(false),
 					MultiplexerValue: (uint)(0),
@@ -2526,6 +2849,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(4),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(true),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2547,6 +2871,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(4),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2581,6 +2906,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(4),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(true),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2603,6 +2929,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2625,6 +2952,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(0),
@@ -2647,6 +2975,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(1),
@@ -2668,6 +2997,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(0),
@@ -2690,6 +3020,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(1),
@@ -2711,6 +3042,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(0),
@@ -2733,6 +3065,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(1),
@@ -2754,6 +3087,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(0),
@@ -2776,6 +3110,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(12),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(true),
 					MultiplexerValue:  (uint)(1),
@@ -2810,6 +3145,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(1),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2832,6 +3168,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(16),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2867,6 +3204,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(8),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2888,6 +3226,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:           (uint8)(6),
 					IsBigEndian:      (bool)(false),
 					IsSigned:         (bool)(false),
+					IsFloat:          (bool)(false),
 					IsMultiplexer:    (bool)(false),
 					IsMultiplexed:    (bool)(false),
 					MultiplexerValue: (uint)(0),
@@ -2918,6 +3257,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(8),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(true),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2939,6 +3279,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:            (uint8)(8),
 					IsBigEndian:       (bool)(false),
 					IsSigned:          (bool)(false),
+					IsFloat:           (bool)(false),
 					IsMultiplexer:     (bool)(false),
 					IsMultiplexed:     (bool)(false),
 					MultiplexerValue:  (uint)(0),
@@ -2960,6 +3301,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:           (uint8)(1),
 					IsBigEndian:      (bool)(false),
 					IsSigned:         (bool)(false),
+					IsFloat:          (bool)(false),
 					IsMultiplexer:    (bool)(false),
 					IsMultiplexed:    (bool)(false),
 					MultiplexerValue: (uint)(0),
@@ -2990,6 +3332,7 @@ var d = (*descriptor.Database)(&descriptor.Database{
 					Length:           (uint8)(2),
 					IsBigEndian:      (bool)(false),
 					IsSigned:         (bool)(false),
+					IsFloat:          (bool)(false),
 					IsMultiplexer:    (bool)(false),
 					IsMultiplexed:    (bool)(false),
 					MultiplexerValue: (uint)(0),
@@ -3017,6 +3360,63 @@ var d = (*descriptor.Database)(&descriptor.Database{
 							Description: (string)("Six"),
 						}),
 					}),
+					ReceiverNodes: ([]string)([]string{
+						(string)("DBG"),
+					}),
+					DefaultValue: (int)(0),
+				}),
+			}),
+			SenderNode: (string)("IO"),
+			CycleTime:  (time.Duration)(0),
+			DelayTime:  (time.Duration)(0),
+		}),
+		(*descriptor.Message)(&descriptor.Message{
+			Name:        (string)("IOFloat32"),
+			ID:          (uint32)(600),
+			IsExtended:  (bool)(false),
+			Length:      (uint8)(8),
+			SendType:    (descriptor.SendType)(0),
+			Description: (string)(""),
+			Signals: ([]*descriptor.Signal)([]*descriptor.Signal{
+				(*descriptor.Signal)(&descriptor.Signal{
+					Name:              (string)("Float32ValueNoRange"),
+					Start:             (uint8)(0),
+					Length:            (uint8)(32),
+					IsBigEndian:       (bool)(false),
+					IsSigned:          (bool)(true),
+					IsFloat:           (bool)(true),
+					IsMultiplexer:     (bool)(false),
+					IsMultiplexed:     (bool)(false),
+					MultiplexerValue:  (uint)(0),
+					Offset:            (float64)(0),
+					Scale:             (float64)(1),
+					Min:               (float64)(0),
+					Max:               (float64)(0),
+					Unit:              (string)(""),
+					Description:       (string)(""),
+					ValueDescriptions: ([]*descriptor.ValueDescription)(nil),
+					ReceiverNodes: ([]string)([]string{
+						(string)("DBG"),
+					}),
+					DefaultValue: (int)(0),
+				}),
+				(*descriptor.Signal)(&descriptor.Signal{
+					Name:              (string)("Float32WithRange"),
+					Start:             (uint8)(32),
+					Length:            (uint8)(32),
+					IsBigEndian:       (bool)(false),
+					IsSigned:          (bool)(true),
+					IsFloat:           (bool)(true),
+					IsMultiplexer:     (bool)(false),
+					IsMultiplexed:     (bool)(false),
+					MultiplexerValue:  (uint)(0),
+					Offset:            (float64)(0),
+					Scale:             (float64)(1),
+					Min:               (float64)(-100),
+					Max:               (float64)(100),
+					Unit:              (string)(""),
+					Description:       (string)(""),
+					ValueDescriptions: ([]*descriptor.ValueDescription)(nil),
 					ReceiverNodes: ([]string)([]string{
 						(string)("DBG"),
 					}),
