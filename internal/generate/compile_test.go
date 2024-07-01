@@ -2,9 +2,11 @@ package generate
 
 import (
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
+	"github.com/xiaoxu5271/can-go"
 	"github.com/xiaoxu5271/can-go/pkg/descriptor"
 	examplecan "github.com/xiaoxu5271/can-go/testdata/gen/go/example"
 	"gotest.tools/v3/assert"
@@ -293,6 +295,34 @@ func TestCompile_ExampleDBC(t *testing.T) {
 					},
 				},
 			},
+			{
+				ID:         600,
+				Name:       "IOFloat32",
+				Length:     8,
+				SenderNode: "IO",
+				SendType:   descriptor.SendTypeNone,
+				Signals: []*descriptor.Signal{
+					{
+						Name:          "Float32ValueNoRange",
+						Length:        32,
+						IsSigned:      true,
+						IsFloat:       true,
+						Scale:         1,
+						ReceiverNodes: []string{"DBG"},
+					},
+					{
+						Name:          "Float32WithRange",
+						Start:         32,
+						Length:        32,
+						IsSigned:      true,
+						IsFloat:       true,
+						Scale:         1,
+						Min:           -100,
+						Max:           100,
+						ReceiverNodes: []string{"DBG"},
+					},
+				},
+			},
 		},
 	}
 	input, err := os.ReadFile(exampleDBCFile)
@@ -305,4 +335,71 @@ func TestCompile_ExampleDBC(t *testing.T) {
 		t.Fatal(result.Warnings)
 	}
 	assert.DeepEqual(t, exampleDatabase, result.Database)
+}
+
+func TestCompile_Float64SignalWarningExpected(t *testing.T) {
+	finish := runTestInDir(t, "../..")
+	defer finish()
+	const exampleDBCFile = "testdata/dbc-invalid/example/example_float64_signal.dbc"
+	input, err := os.ReadFile(exampleDBCFile)
+	assert.NilError(t, err)
+	result, err := Compile(exampleDBCFile, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// We expect one warning from unsupported float64 signal
+	assert.Equal(t, len(result.Warnings), 1)
+}
+
+func TestCompile_Float32InvalidSignalNameWarningExpected(t *testing.T) {
+	finish := runTestInDir(t, "../..")
+	defer finish()
+	const exampleDBCFile = "testdata/dbc-invalid/example/example_float32_invalid_signal_name.dbc"
+	input, err := os.ReadFile(exampleDBCFile)
+	assert.NilError(t, err)
+	result, err := Compile(exampleDBCFile, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// We expect one warning for incorrect signal name in SIGVAL_TYPE_ declaration
+	assert.Equal(t, len(result.Warnings), 1)
+}
+
+func TestCompile_Float32InvalidSignalLengthWarningExpected(t *testing.T) {
+	finish := runTestInDir(t, "../..")
+	defer finish()
+	const exampleDBCFile = "testdata/dbc-invalid/example/example_float32_invalid_signal_length.dbc"
+	input, err := os.ReadFile(exampleDBCFile)
+	assert.NilError(t, err)
+	result, err := Compile(exampleDBCFile, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// We expect one warning for incorrect signal length in declaration of float32 signal
+	assert.Equal(t, len(result.Warnings), 1)
+}
+
+func Test_CopyFrom_PreservesOutOfRangeValues(t *testing.T) {
+	descriptor := examplecan.Messages().MotorCommand
+	frame := can.Frame{
+		ID:         descriptor.ID,
+		Length:     descriptor.Length,
+		IsExtended: descriptor.IsExtended,
+	}
+	// 0xF is 15, but max is set to 9
+	descriptor.Drive.MarshalUnsigned(&frame.Data, 0xF)
+	// Unmarshal out of bounds value
+	original := examplecan.NewMotorCommand()
+	if err := original.UnmarshalFrame(frame); err != nil {
+		t.Errorf("Failed to unmarshal frame: %v", err)
+	}
+	// When we CopyFrom original message to m2
+	m2 := examplecan.NewMotorCommand().CopyFrom(original)
+	// Then we expect the messages and the frames to be identical
+	if !reflect.DeepEqual(m2, original) {
+		t.Errorf("Expected new message (%v) and original (%v) to be identical", m2, original)
+	}
+	if m2.Frame() != original.Frame() {
+		t.Errorf("Expected frames of messages to be identical (%v != %v)", m2.Frame(), original.Frame())
+	}
 }

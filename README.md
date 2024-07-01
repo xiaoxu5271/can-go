@@ -1,18 +1,27 @@
-:electric_plug: CAN Go
-======================
+# :electric_plug: go.einride.tech/can
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/xiaoxu5271/can-go)](https://pkg.go.dev/github.com/xiaoxu5271/can-go) [![GoReportCard](https://goreportcard.com/badge/github.com/xiaoxu5271/can-go)](https://goreportcard.com/report/github.com/xiaoxu5271/can-go) [![Codecov](https://codecov.io/gh/einride/can-go/branch/master/graph/badge.svg)](https://codecov.io/gh/einride/can-go)
 
 CAN toolkit for Go programmers.
 
-can-go makes use of the Linux SocketCAN abstraction for CAN communication. (See the [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt) documentation for more details).
+can-go makes use of the Linux SocketCAN abstraction for CAN communication. (See
+the [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt)
+documentation for more details).
 
-Examples
---------
+## Installation
+
+```
+go get -u go.einride.tech/can
+```
+
+## Examples
 
 ### Setting up a CAN interface
 
 ```go
+
+import "go.einride.tech/can/pkg/candevice"
+
 func main() {
 	// Error handling omitted to keep example simple
 	d, _ := candevice.New("can0")
@@ -27,6 +36,8 @@ func main() {
 Receiving CAN frames from a socketcan interface.
 
 ```go
+import "go.einride.tech/can/pkg/socketcan"
+
 func main() {
 	// Error handling omitted to keep example simple
 	conn, _ := socketcan.DialContext(context.Background(), "can", "can0")
@@ -44,6 +55,8 @@ func main() {
 Sending CAN frames to a socketcan interface.
 
 ```go
+import "go.einride.tech/can/pkg/socketcan"
+
 func main() {
 	// Error handling omitted to keep example simple
 
@@ -63,7 +76,9 @@ It is possible to generate Go code from a `.dbc` file.
 $ go run github.com/xiaoxu5271/can-go/cmd/cantool generate <dbc file root folder> <output folder>
 ```
 
-In order to generate Go code that makes sense, we currently perform some validations when parsing the DBC file so there may need to be some changes on the DBC file to make it work
+In order to generate Go code that makes sense, we currently perform some
+validations when parsing the DBC file so there may need to be some changes on
+the DBC file to make it work
 
 After generating Go code we can marshal a message to a frame:
 
@@ -88,8 +103,7 @@ _ = auxMsg.UnmarshalFrame(frame)
 
 ```
 
-Running integration tests
--------------------------
+## Running integration tests
 
 Building the tests:
 
@@ -99,7 +113,8 @@ $ make build-integration-tests
 
 Built tests are placed in build/tests.
 
-The candevice test requires access to physical HW, so run it using sudo. Example:
+The candevice test requires access to physical HW, so run it using sudo.
+Example:
 
 ```shell
 $ sudo ./build/tests/candevice.test

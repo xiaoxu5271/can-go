@@ -51,7 +51,7 @@ func generateCommand(app *kingpin.Application) {
 		Arg("output-dir", "output directory").
 		Required().
 		String()
-	command.Action(func(c *kingpin.ParseContext) error {
+	command.Action(func(_ *kingpin.ParseContext) error {
 		return filepath.Walk(*inputDir, func(p string, i os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -76,7 +76,7 @@ func lintCommand(app *kingpin.Application) {
 		Arg("file-or-dir", "DBC file or directory").
 		Required().
 		ExistingFileOrDir()
-	command.Action(func(context *kingpin.ParseContext) error {
+	command.Action(func(_ *kingpin.ParseContext) error {
 		filesToLint, err := resolveFileOrDirectory(*fileOrDir)
 		if err != nil {
 			return err
@@ -133,6 +133,7 @@ func analyzers() []*analysis.Analyzer {
 		signalnames.Analyzer(),
 		singletondefinitions.Analyzer(),
 		siunits.Analyzer(),
+		uniquemessageids.Analyzer(),
 		uniquenodenames.Analyzer(),
 		uniquesignalnames.Analyzer(),
 		unitsuffixes.Analyzer(),
@@ -176,7 +177,7 @@ func resolveFileOrDirectory(fileOrDirectory string) ([]string, error) {
 		return []string{fileOrDirectory}, nil
 	}
 	var files []string
-	if err := filepath.Walk(fileOrDirectory, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(fileOrDirectory, func(path string, info os.FileInfo, _ error) error {
 		if !info.IsDir() && filepath.Ext(path) == ".dbc" {
 			files = append(files, path)
 		}

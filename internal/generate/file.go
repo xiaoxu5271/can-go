@@ -184,11 +184,8 @@ func MessageType(f *File, m *descriptor.Message) {
 		if hasPhysicalRepresentation(s) {
 			f.P("// ", s.Name, " returns the physical value of the ", s.Name, " signal.")
 			f.P(s.Name, "() float64")
-			if len(s.ValueDescriptions) > 0 {
-				f.P()
-				f.P("// ", s.Name, " returns the raw (encoded) value of the ", s.Name, " signal.")
-				f.P("Raw", s.Name, "() ", signalType(m, s))
-			}
+			f.P("// Raw", s.Name, " returns the raw (encoded) value of the ", s.Name, " signal.")
+			f.P("Raw", s.Name, "() ", signalType(m, s))
 		} else {
 			f.P("// ", s.Name, " returns the value of the ", s.Name, " signal.")
 			f.P(s.Name, "()", signalType(m, s))
@@ -198,17 +195,14 @@ func MessageType(f *File, m *descriptor.Message) {
 	f.P()
 	f.P("// ", messageWriterInterface(m), " provides write access to a ", m.Name, " message.")
 	f.P("type ", messageWriterInterface(m), " interface {")
-	f.P("// CopyFrom copies all values from ", messageReaderInterface(m), ".")
-	f.P("CopyFrom(", messageReaderInterface(m), ") *", messageStruct(m))
+	f.P("// CopyFrom copies all values from ", messageStruct(m), ".")
+	f.P("CopyFrom(*", messageStruct(m), ") *", messageStruct(m))
 	for _, s := range m.Signals {
 		if hasPhysicalRepresentation(s) {
 			f.P("// Set", s.Name, " sets the physical value of the ", s.Name, " signal.")
 			f.P("Set", s.Name, "(float64) *", messageStruct(m))
-			if len(s.ValueDescriptions) > 0 {
-				f.P()
-				f.P("// SetRaw", s.Name, " sets the raw (encoded) value of the ", s.Name, " signal.")
-				f.P("SetRaw", s.Name, "(", signalType(m, s), ") *", messageStruct(m))
-			}
+			f.P("// SetRaw", s.Name, " sets the raw (encoded) value of the ", s.Name, " signal.")
+			f.P("SetRaw", s.Name, "(", signalType(m, s), ") *", messageStruct(m))
 		} else {
 			f.P("// Set", s.Name, " sets the value of the ", s.Name, " signal.")
 			f.P("Set", s.Name, "(", signalType(m, s), ") *", messageStruct(m))
@@ -241,14 +235,8 @@ func MessageType(f *File, m *descriptor.Message) {
 	}
 	f.P("}")
 	f.P()
-	f.P("func (m *", messageStruct(m), ") CopyFrom(o ", messageReaderInterface(m), ") *", messageStruct(m), "{")
-	for _, s := range m.Signals {
-		if hasPhysicalRepresentation(s) {
-			f.P("m.Set", s.Name, "(o.", s.Name, "())")
-		} else {
-			f.P("m.", signalField(s), " = o.", s.Name, "()")
-		}
-	}
+	f.P("func (m *", messageStruct(m), ") CopyFrom(o *", messageStruct(m), ") *", messageStruct(m), "{")
+	f.P("_ = m.UnmarshalFrame(o.Frame())")
 	f.P("return m")
 	f.P("}")
 	f.P()
@@ -292,21 +280,19 @@ func MessageType(f *File, m *descriptor.Message) {
 		f.P("return m")
 		f.P("}")
 		f.P()
-		if len(s.ValueDescriptions) > 0 {
-			f.P("func (m *", messageStruct(m), ") Raw", s.Name, "() ", signalType(m, s), " {")
-			f.P("return m.", signalField(s))
-			f.P("}")
-			f.P()
-			f.P("func (m *", messageStruct(m), ") SetRaw", s.Name, "(v ", signalType(m, s), ") *", messageStruct(m), "{")
-			f.P(
-				"m.", signalField(s), " = ", signalType(m, s), "(",
-				signalDescriptor(m, s), ".SaturatedCast", signalSuperType(s), "(",
-				signalPrimitiveSuperType(s), "(v)))",
-			)
-			f.P("return m")
-			f.P("}")
-			f.P()
-		}
+		f.P("func (m *", messageStruct(m), ") Raw", s.Name, "() ", signalType(m, s), " {")
+		f.P("return m.", signalField(s))
+		f.P("}")
+		f.P()
+		f.P("func (m *", messageStruct(m), ") SetRaw", s.Name, "(v ", signalType(m, s), ") *", messageStruct(m), "{")
+		f.P(
+			"m.", signalField(s), " = ", signalType(m, s), "(",
+			signalDescriptor(m, s), ".SaturatedCast", signalSuperType(s), "(",
+			signalPrimitiveSuperType(s), "(v)))",
+		)
+		f.P("return m")
+		f.P("}")
+		f.P()
 	}
 }
 
@@ -749,6 +735,7 @@ func txGroupInterface(n *descriptor.Node) string {
 	return n.Name + "_Tx"
 }
 
+//nolint:goconst
 func txGroupStruct(n *descriptor.Node) string {
 	return "xxx_" + n.Name + "_Tx"
 }
@@ -809,9 +796,12 @@ func hasPhysicalRepresentation(s *descriptor.Signal) bool {
 	hasOffset := s.Offset != 0
 	hasRange := s.Min != 0 || s.Max != 0
 	var hasConstrainedRange bool
-	if s.IsSigned {
+	switch {
+	case s.IsFloat:
+		hasConstrainedRange = s.Min > s.MinFloat() || s.Max < s.MaxFloat()
+	case s.IsSigned:
 		hasConstrainedRange = s.Min > float64(s.MinSigned()) || s.Max < float64(s.MaxSigned())
-	} else {
+	default:
 		hasConstrainedRange = s.Min > 0 || s.Max < float64(s.MaxUnsigned())
 	}
 	return hasScale || hasOffset || hasRange && hasConstrainedRange
@@ -840,6 +830,8 @@ func signalType(m *descriptor.Message, s *descriptor.Signal) string {
 func signalPrimitiveType(s *descriptor.Signal) types.Type {
 	var t types.BasicKind
 	switch {
+	case s.Length == 32 && s.IsFloat:
+		t = types.Float32
 	case s.Length == 1:
 		t = types.Bool
 	case s.Length <= 8 && s.IsSigned:
@@ -865,6 +857,8 @@ func signalPrimitiveType(s *descriptor.Signal) types.Type {
 func signalPrimitiveSuperType(s *descriptor.Signal) types.Type {
 	var t types.BasicKind
 	switch {
+	case s.IsFloat:
+		t = types.Float64
 	case s.Length == 1:
 		t = types.Bool
 	case s.IsSigned:
@@ -877,6 +871,8 @@ func signalPrimitiveSuperType(s *descriptor.Signal) types.Type {
 
 func signalSuperType(s *descriptor.Signal) string {
 	switch {
+	case s.Length <= 32 && s.IsFloat:
+		return "Float"
 	case s.Length == 1:
 		return "Bool"
 	case s.IsSigned:
