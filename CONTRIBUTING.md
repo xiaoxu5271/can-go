@@ -33,4 +33,4 @@ send fix commits.
 Before opening a PR, please make sure you get no errors when running `make` and
 that there is sufficient test coverage for added or changed functionality.
 
-[can-go]: https://go.einride.tech/can
+[can-go]: https://github.com/xiaoxu5271/can-go

@@ -1,4 +1,4 @@
-# :electric_plug: go.einride.tech/can
+# :electric_plug: github.com/xiaoxu5271/can-go
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/xiaoxu5271/can-go)](https://pkg.go.dev/github.com/xiaoxu5271/can-go) [![GoReportCard](https://goreportcard.com/badge/github.com/xiaoxu5271/can-go)](https://goreportcard.com/report/github.com/xiaoxu5271/can-go) [![Codecov](https://codecov.io/gh/einride/can-go/branch/master/graph/badge.svg)](https://codecov.io/gh/einride/can-go)
 
@@ -11,7 +11,7 @@ documentation for more details).
 ## Installation
 
 ```
-go get -u go.einride.tech/can
+go get -u github.com/xiaoxu5271/can-go
 ```
 
 ## Examples
@@ -20,7 +20,7 @@ go get -u go.einride.tech/can
 
 ```go
 
-import "go.einride.tech/can/pkg/candevice"
+import "github.com/xiaoxu5271/can-go/pkg/candevice"
 
 func main() {
 	// Error handling omitted to keep example simple
@@ -36,7 +36,7 @@ func main() {
 Receiving CAN frames from a socketcan interface.
 
 ```go
-import "go.einride.tech/can/pkg/socketcan"
+import "github.com/xiaoxu5271/can-go/pkg/socketcan"
 
 func main() {
 	// Error handling omitted to keep example simple
@@ -55,7 +55,7 @@ func main() {
 Sending CAN frames to a socketcan interface.
 
 ```go
-import "go.einride.tech/can/pkg/socketcan"
+import "github.com/xiaoxu5271/can-go/pkg/socketcan"
 
 func main() {
 	// Error handling omitted to keep example simple
